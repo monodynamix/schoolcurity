@@ -49,6 +49,8 @@ function getLocalVisitors() {
     });
 }
 
+const visitorsIn = new Set();
+
 // Submit visitor
 async function submitVisitor() {
     const name = document.getElementById("visitorName").value.trim();
@@ -70,6 +72,27 @@ async function submitVisitor() {
         alert("Invalid time!");
         return;
     }
+
+    if (status.id == "entering") {
+        if (visitorsIn.has(name)) {
+            alert("Visitor is already in school!");
+            return;
+        }
+        else {
+            visitorsIn.add(name);
+        }
+    }
+    if (status.id == "exiting") {
+        if (!visitorsIn.has(name)) {
+            alert("Visitor is not in school!");
+            return;
+        }
+        else {
+            visitorsIn.delete(name);
+        }
+    }
+
+
 
     const visitor = {
         id: crypto.randomUUID(),
