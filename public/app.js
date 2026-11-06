@@ -261,3 +261,99 @@ async function displayVisitors() {
         tableBody.appendChild(row);
     }
 }
+
+
+async function clearAllRecords() {
+    const confirmed = confirm(
+        "Are you sure you want to permanently delete ALL visitor records? This cannot be undone."
+    );
+
+    if (!confirmed) return;
+
+    try {
+
+// Delete records from the server first
+const response = await fetch("/api/visitors", {
+    method: "DELETE"
+});
+
+if (!response.ok) {
+    const errorDetails = await response.text();
+
+    throw new Error(
+        `Server returned ${response.status}: ${errorDetails}`
+    );
+}
+
+
+        
+        // Check that the local database is ready
+        if (!localDB) {
+            throw new Error("Local database is not ready.");
+        }
+
+        // Clear the visitors object store
+        await new Promise((resolve, reject) => {
+            const transaction = localDB.transaction(
+                "visitors",
+                "readwrite"
+            );
+
+            transaction.objectStore("visitors").clear();
+
+            transaction.oncomplete = resolve;
+            transaction.onerror = () => reject(transaction.error);
+            transaction.onabort = () => reject(transaction.error);
+        });
+        visitorsIn.clear();
+
+        // Refresh the visitor table
+        await displayVisitors();
+
+        alert("All locally stored visitor records have been cleared!");
+
+    } catch (error) {
+        console.error("Failed to clear records:", error);
+        alert("Failed to clear records: " + error.message);
+    }
+}
+
+// Connect the button
+document
+    .getElementById("clearRecordsButton")
+    .addEventListener("click", clearAllRecords);
+
+
+// TEMPORARY SCHOOLCURITY PASSWORD
+const SCHOOLCURITY_PASSWORD = "mikutetoneru";
+
+function login() {
+    const enteredPassword =
+        document.getElementById("passwordInput").value;
+
+    const errorMessage =
+        document.getElementById("loginError");
+
+    if (enteredPassword === SCHOOLCURITY_PASSWORD) {
+        document.getElementById("loginScreen").style.display = "none";
+        document.getElementById("appContent").style.display = "block";
+
+        errorMessage.textContent = "";
+    } else {
+        errorMessage.textContent = "Incorrect password!";
+    }
+}
+
+// Login button
+document.getElementById("loginButton")
+    .addEventListener("click", login);
+
+// Allow Enter key to submit password
+document.getElementById("passwordInput")
+    .addEventListener("keydown", function(event) {
+        if (event.key === "Enter") {
+            login();
+        }
+    });
+
+

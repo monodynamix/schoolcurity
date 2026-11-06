@@ -41,6 +41,28 @@ app.post("/api/visitors", (req, res) => {
     }
 });
 
+
+// Delete all visitor records from SQLite
+app.delete("/api/visitors", (req, res) => {
+    try {
+        const result = db.prepare(
+            "DELETE FROM visitors"
+        ).run();
+
+        res.json({
+            success: true,
+            deleted: result.changes
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            error: "Failed to delete visitor records"
+        });
+    }
+});
+
+
 // Retrieve visitor records
 app.get("/api/visitors", (req, res) => {
     const visitors = db.prepare(
@@ -48,6 +70,28 @@ app.get("/api/visitors", (req, res) => {
     ).all();
 
     res.json(visitors);
+});
+
+app.delete("/api/visitors", (req, res) => {
+    try {
+        const result = db.prepare(
+            "DELETE FROM visitors"
+        ).run();
+
+        console.log(`Deleted ${result.changes} visitor records.`);
+
+        res.json({
+            success: true,
+            deleted: result.changes
+        });
+
+    } catch (error) {
+        console.error("Deletion failed:", error);
+
+        res.status(500).json({
+            error: "Failed to delete visitor records."
+        });
+    }
 });
 
 app.listen(3000, () => {

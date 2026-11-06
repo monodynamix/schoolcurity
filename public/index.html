@@ -10,6 +10,23 @@
 </head>
 <body>
 
+    <div id="loginScreen">
+    <h1>Schoolcurity Login</h1>
+    <p>Please enter the security password.</p>
+
+    <input
+        type="password"
+        id="passwordInput"
+        placeholder="Enter password"
+    >
+
+    <button id="loginButton">Login</button>
+
+    <p id="loginError" style="color: red;"></p>
+</div>
+
+<div id="appContent" style="display: none;">
+
 <h1>Schoolcurity</h1>
 <img src="schoolrity.png" alt="schoolrity logo" width="200" height="200">
 <p>Welcome to Schoolcurity! This is a school security system where security guards can monitor entrance and exit timings of visitors and store them while connected to the internet.</p>
@@ -32,6 +49,11 @@
 
 <button onclick="displayVisitors()">Refresh Records</button>
 
+
+<button id="clearRecordsButton" type="button">
+    Clear All Records
+</button>
+
 <table border="1" cellpadding="8" id="visitorTable">
     <thead>
         <tr>
@@ -52,6 +74,8 @@
 
 
 <script src="app.js"></script>
+
+</div>
 </body>
 </html>
 
