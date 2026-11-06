@@ -49,7 +49,73 @@ function getLocalVisitors() {
     });
 }
 
-const visitorsIn = new Set();
+ 
+
+// Retrieve complete visitor history
+async function getVisitorHistory() {
+    const localVisitors = await getLocalVisitors();
+
+    if (!navigator.onLine) {
+        return localVisitors;
+    }
+
+    try {
+        const response = await fetch("/api/visitors");
+
+        if (!response.ok) {
+            throw new Error("Server unavailable");
+        }
+
+        const serverVisitors = await response.json();
+
+        const serverIds = new Set(
+            serverVisitors.map(visitor => visitor.id)
+        );
+
+        const pendingVisitors = localVisitors.filter(
+            visitor => !visitor.synced &&
+                       !serverIds.has(visitor.id)
+        );
+
+        return [...serverVisitors, ...pendingVisitors];
+
+    } catch (error) {
+        console.log("Using local visitor history:", error);
+        return localVisitors;
+    }
+}   
+
+    
+
+
+
+// Standardise names to avoid differences in capitalisation
+function normaliseName(name) {
+    return name.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+// Calculate who is currently inside using visitor history
+function calculateVisitorsInside(visitors) {
+    const inside = new Map();
+
+    // Process records from oldest to newest
+    visitors.sort((a, b) =>
+        new Date(a.created_at) - new Date(b.created_at)
+    );
+
+    for (const visitor of visitors) {
+        const key = normaliseName(visitor.name);
+
+        if (visitor.status === "entering") {
+            inside.set(key, visitor.name.trim());
+        } else if (visitor.status === "exiting") {
+            inside.delete(key);
+        }
+    }
+
+    return inside;
+}
+
 
 // Submit visitor
 async function submitVisitor() {
@@ -73,24 +139,27 @@ async function submitVisitor() {
         return;
     }
 
-    if (status.id == "entering") {
-        if (visitorsIn.has(name)) {
-            alert("Visitor is already in school!");
-            return;
-        }
-        else {
-            visitorsIn.add(name);
-        }
+    
+// Reconstruct current occupancy from visitor history
+const history = await getVisitorHistory();
+const peopleInside = calculateVisitorsInside(history);
+
+const nameKey = normaliseName(name);
+
+if (status.value === "entering") {
+    if (peopleInside.has(nameKey)) {
+        alert("Visitor is already in school!");
+        return;
     }
-    if (status.id == "exiting") {
-        if (!visitorsIn.has(name)) {
-            alert("Visitor is not in school!");
-            return;
-        }
-        else {
-            visitorsIn.delete(name);
-        }
+}
+
+if (status.value === "exiting") {
+    if (!peopleInside.has(nameKey)) {
+        alert("Visitor is not in school!");
+        return;
     }
+}
+
 
 
 
@@ -226,6 +295,29 @@ async function displayVisitors() {
         new Date(b.created_at) - new Date(a.created_at)
     );
 
+    
+// Update the current occupancy list
+const inside = calculateVisitorsInside([...visitors]);
+
+const insideList = document.getElementById(
+    "currentlyInsideList"
+);
+
+insideList.replaceChildren();
+
+if (inside.size === 0) {
+    const item = document.createElement("li");
+    item.textContent = "Nobody is currently inside.";
+    insideList.appendChild(item);
+} else {
+    for (const person of inside.values()) {
+        const item = document.createElement("li");
+        item.textContent = person;
+        insideList.appendChild(item);
+    }
+}
+
+
     // Clear previous table contents
     tableBody.replaceChildren();
 
@@ -305,7 +397,6 @@ if (!response.ok) {
             transaction.onerror = () => reject(transaction.error);
             transaction.onabort = () => reject(transaction.error);
         });
-        visitorsIn.clear();
 
         // Refresh the visitor table
         await displayVisitors();
