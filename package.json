@@ -17,5 +17,9 @@
   "bugs": {
     "url": "https://github.com/monodynamix/schoolcurity/issues"
   },
-  "homepage": "https://github.com/monodynamix/schoolcurity#readme"
+  "homepage": "https://github.com/monodynamix/schoolcurity#readme",
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "express": "^5.3.0"
+  }
 }
