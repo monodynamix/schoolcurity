@@ -19,6 +19,33 @@
 <button onclick="submitVisitor()">Submit</button>
 
 
+<hr>
+
+<h2>Visitor Records</h2>
+
+<p id="connectionStatus">Checking connection...</p>
+
+<button onclick="displayVisitors()">Refresh Records</button>
+
+<table border="1" cellpadding="8" id="visitorTable">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Status</th>
+            <th>Time</th>
+            <th>Sync Status</th>
+        </tr>
+    </thead>
+
+    <tbody id="visitorTableBody">
+        <tr>
+            <td colspan="4">Loading records...</td>
+        </tr>
+    </tbody>
+</table>
+
+
+
 <script src="app.js"></script>
 </body>
 </html>

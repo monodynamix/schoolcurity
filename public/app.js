@@ -12,11 +12,11 @@ request.onupgradeneeded = function(event) {
     });
 };
 
-request.onsuccess = function(event) {
+request.onsuccess = async function(event) {
     localDB = event.target.result;
 
-    // Upload any previously unsynced records
-    syncVisitors();
+    await syncVisitors();
+    await displayVisitors();
 };
 
 // Save a visitor locally
@@ -82,13 +82,16 @@ async function submitVisitor() {
 
     // Always save locally first
     await saveLocally(visitor);
+    await displayVisitors();
 
     alert("Visitor record saved locally!");
 
     // Attempt upload
-    if (navigator.onLine) {
-        syncVisitors();
-    }
+   // Attempt upload and refresh records
+if (navigator.onLine) {
+    await syncVisitors();
+    await displayVisitors();
+}
 
     // Clear form
     document.getElementById("visitorName").value = "";
@@ -132,9 +135,106 @@ async function syncVisitors() {
 }
 
 // Automatically sync when internet returns
-window.addEventListener("online", syncVisitors);
+window.addEventListener("online", async () => {
+    await syncVisitors();
+    await displayVisitors();
+});
+window.addEventListener("offline", displayVisitors);
 
 // Also retry when the page becomes visible
 document.addEventListener("visibilitychange", () => {
     if (!document.hidden) syncVisitors();
 });
+
+// Display visitor records
+async function displayVisitors() {
+    const tableBody = document.getElementById("visitorTableBody");
+    const connectionStatus = document.getElementById("connectionStatus");
+
+    if (!localDB) {
+        tableBody.textContent = "Local database is still loading...";
+        return;
+    }
+
+    let visitors = [];
+
+    try {
+        if (navigator.onLine) {
+            // Try retrieving records from the server
+            const response = await fetch("/api/visitors");
+
+            if (!response.ok) {
+                throw new Error("Server unavailable");
+            }
+
+            visitors = await response.json();
+
+            // Server records have already been synchronised
+            visitors = visitors.map(visitor => ({
+                ...visitor,
+                synced: true
+            }));
+
+            // Also include locally stored records waiting for upload
+            const localVisitors = await getLocalVisitors();
+
+            const serverIds = new Set(visitors.map(v => v.id));
+
+            for (const visitor of localVisitors) {
+                if (!serverIds.has(visitor.id)) {
+                    visitors.push(visitor);
+                }
+            }
+
+            connectionStatus.textContent = "Online – Connected to server";
+        } else {
+            throw new Error("Offline");
+        }
+    } catch (error) {
+        // If server cannot be reached, show local records
+        visitors = await getLocalVisitors();
+
+        connectionStatus.textContent =
+            "Offline – Showing locally saved records";
+    }
+
+    // Sort newest records first
+    visitors.sort((a, b) =>
+        new Date(b.created_at) - new Date(a.created_at)
+    );
+
+    // Clear previous table contents
+    tableBody.replaceChildren();
+
+    if (visitors.length === 0) {
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+
+        cell.colSpan = 4;
+        cell.textContent = "No visitor records found.";
+
+        row.appendChild(cell);
+        tableBody.appendChild(row);
+        return;
+    }
+
+    // Display each visitor
+    for (const visitor of visitors) {
+        const row = document.createElement("tr");
+
+        const values = [
+            visitor.name,
+            visitor.status,
+            visitor.time,
+            visitor.synced ? "Synced" : "Pending upload"
+        ];
+
+        for (const value of values) {
+            const cell = document.createElement("td");
+            cell.textContent = value;
+            row.appendChild(cell);
+        }
+
+        tableBody.appendChild(row);
+    }
+}
