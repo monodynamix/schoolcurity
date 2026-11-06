@@ -1,9 +1,10 @@
 body {
-  background-color: yellow;
+  background-color: rgb(215, 102, 120);
+  font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif
 }
 h1 {
-  color: blue;
+  color:rgb(51, 39, 107);
 }
 p {
-  color: black;
+  color: rgb(54, 44, 103);
 }

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="styles.css">
+    <title>hey its me! its schoolcurity!</title>
+</head>
+<body>
+
+<h1>Schoolcurity</h1>
+<p>Welcome to Schoolcurity! This is a school security system where security guards can monitor entrance and exit timings of visitors and store them while connected to the internet.</p>
+<p>Enter visitor name: <input type="text" id="visitorName"></p>
+<p>Are you entering or exiting? <input type="radio" id="entering" name="status" value="entering">
+<label for="entering">Entering</label>
+<input type="radio" id="exiting" name="status" value="exiting">
+<label for="exiting">Exiting</label></p>
+<p>Time:</p>
+<p>Hour: <input type="number" id="hour" min="0" max="23"></p>
+<p>Minute: <input type="number" id="minute" min="0" max="59"></p>
+<button onclick="submitVisitor()">Submit</button>
+
+
+
+</body>
+</html>
+
